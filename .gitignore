@@ -1,0 +1,3 @@
+
+# Local binary deliverables (excluded from Codex PR flow)
+deliverables/*.zip

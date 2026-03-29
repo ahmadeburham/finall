@@ -1,0 +1,113 @@
+version: "1.0.0"
+pipeline_version: "1.0.0"
+output:
+  retention_days: 30
+  save_debug: true
+  privacy_safe_mode: false
+  redact_debug_regions: false
+
+detection:
+  feature_method: "orb"
+  orb:
+    nfeatures: 2500
+    scaleFactor: 1.2
+    nlevels: 8
+    edgeThreshold: 31
+  matching:
+    ratio_test: 0.75
+    min_keypoints_template: 80
+    min_keypoints_scene: 120
+    min_raw_matches: 50
+    min_good_matches: 28
+    ransac_reproj_threshold: 5.0
+    homography_method: "usac_magsac"
+  candidate_validation:
+    min_area_ratio: 0.02
+    max_area_ratio: 0.95
+    min_edge_length_px: 80
+    aspect_ratio_tolerance: 0.35
+
+fallback_detection:
+  enabled: true
+  relaxed_ratio_test: 0.85
+  min_good_matches: 16
+  contour:
+    canny_low: 50
+    canny_high: 150
+    epsilon_factor: 0.02
+    min_area_ratio: 0.02
+
+alignment:
+  ecc:
+    enabled: true
+    motion_model: "affine"
+    max_iterations: 150
+    epsilon: 1.0e-6
+    gaussian_filter_size: 5
+  post_warp:
+    min_hist_correlation: 0.35
+    min_text_zone_ink_density: 0.004
+    brightness_min: 35
+    brightness_max: 220
+    contrast_min: 20
+
+regions:
+  # Calibrated from the provided template image where black rectangles define target ROIs.
+  # Normalized coordinates are [x1, y1, x2, y2] against aligned template size.
+  portrait:
+    box: [0.0339, 0.0723, 0.3390, 0.6295]
+    padding: [0.006, 0.008, 0.006, 0.008]
+  birth_date:
+    box: [0.0339, 0.6536, 0.3983, 0.8373]
+    padding: [0.008, 0.010, 0.008, 0.010]
+  full_name:
+    box: [0.4407, 0.2861, 0.9343, 0.4518]
+    padding: [0.010, 0.012, 0.010, 0.012]
+  full_address:
+    box: [0.4386, 0.4608, 0.9364, 0.6506]
+    padding: [0.012, 0.015, 0.012, 0.015]
+  id_number:
+    box: [0.4364, 0.7018, 0.9597, 0.8916]
+    padding: [0.008, 0.010, 0.008, 0.010]
+
+crop_validation:
+  min_width: 40
+  min_height: 20
+  min_focus_var: 40.0
+  brightness_min: 25
+  brightness_max: 235
+  contrast_min: 15
+  max_saturation_mean: 250
+  max_dark_ratio: 0.85
+  min_ink_density: 0.003
+
+ocr:
+  use_gpu_if_available: false
+  lang: "ar"
+  det: true
+  rec: true
+  cls: true
+  try_rotations: [0, 90, 180, 270]
+  min_confidence:
+    full_name: 0.50
+    full_address: 0.45
+    id_number: 0.60
+    birth_date: 0.60
+
+validation:
+  id_number_lengths: [14]
+  birth_date_min_year: 1900
+  birth_date_max_year: 2100
+
+face:
+  enabled: true
+  use_gpu_if_available: false
+  model_pack: "buffalo_l"
+  providers_cpu: ["CPUExecutionProvider"]
+  providers_gpu: ["CUDAExecutionProvider", "CPUExecutionProvider"]
+  similarity_threshold: 0.35
+
+decision:
+  required_fields: ["full_name", "full_address", "id_number", "birth_date"]
+  min_overall_confidence_accept: 0.62
+  min_required_pass_for_review: 2
